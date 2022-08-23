@@ -1,6 +1,5 @@
 package com.ll.exam.sbb.question;
 
-import com.ll.exam.sbb.DataNotFoundException;
 import com.ll.exam.sbb.answer.AnswerForm;
 import com.ll.exam.sbb.user.SiteUser;
 import com.ll.exam.sbb.user.UserService;
@@ -58,10 +57,6 @@ public class QuestionController {
     public String questionModify(QuestionForm questionForm, @PathVariable("id") Integer id, Principal principal) {
         Question question = this.questionService.getQuestion(id);
 
-        if (question == null) {
-            throw new DataNotFoundException("%d번 질문은 존재하지 않습니다.");
-        }
-
         if (!question.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
         }
@@ -80,10 +75,6 @@ public class QuestionController {
         }
 
         Question question = this.questionService.getQuestion(id);
-
-        if (question == null) {
-            throw new DataNotFoundException("%d번 질문은 존재하지 않습니다.");
-        }
 
         if (!question.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
@@ -116,10 +107,6 @@ public class QuestionController {
     public String questionDelete(Principal principal, @PathVariable("id") Integer id) {
         Question question = questionService.getQuestion(id);
 
-        if (question == null) {
-            throw new DataNotFoundException("%d번 질문은 존재하지 않습니다.");
-        }
-
         if (!question.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제권한이 없습니다.");
         }
@@ -127,5 +114,15 @@ public class QuestionController {
         questionService.delete(question);
 
         return "redirect:/";
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/vote/{id}")
+    public String questionVote(Principal principal, @PathVariable("id") Long id) {
+        Question question = questionService.getQuestion(id);
+        SiteUser siteUser = userService.getUser(principal.getName());
+
+        questionService.vote(question, siteUser);
+        return "redirect:/question/detail/%d".formatted(id);
     }
 }

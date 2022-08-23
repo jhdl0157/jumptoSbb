@@ -33,7 +33,7 @@ public class AnswerController {
     public String detail(Principal principal, Model model, @PathVariable long id, @Valid AnswerForm answerForm, BindingResult bindingResult) {
         Question question = this.questionService.getQuestion(id);
 
-        if ( bindingResult.hasErrors() ) {
+        if (bindingResult.hasErrors()) {
             model.addAttribute("question", question);
             return "question_detail";
         }
@@ -41,21 +41,44 @@ public class AnswerController {
         SiteUser siteUser = userService.getUser(principal.getName());
 
         // 답변 등록 시작
-        answerService.create(question, answerForm.getContent(), siteUser);
+        Answer answer = answerService.create(question, answerForm.getContent(), siteUser);
         // 답변 등록 끝
 
-        return "redirect:/question/detail/%d".formatted(id);
+        return "redirect:/question/detail/%d#answer_%d".formatted(id, answer.getId());
     }
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/modify/{id}")
-    public String answerModify(AnswerForm answerForm, @PathVariable("id") Long id, Principal principal) throws ResponseStatusException {
-        Answer answer = this.answerService.getAnswer(id);
+    public String answerModify(AnswerForm answerForm, @PathVariable("id") Long id, Principal principal) {
+        Answer answer = answerService.getAnswer(id);
+
         if (!answer.getAuthor().getUsername().equals(principal.getName())) {
-            throw new DataNotFoundException("데이터가 없다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
         }
+
         answerForm.setContent(answer.getContent());
+
         return "answer_form";
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/modify/{id}")
+    public String answerModify(@Valid AnswerForm answerForm, BindingResult bindingResult, @PathVariable("id") Long id, Principal principal) {
+        if (bindingResult.hasErrors()) {
+            return "answer_form";
+        }
+
+        Answer answer = answerService.getAnswer(id);
+
+        if (!answer.getAuthor().getUsername().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
+        }
+
+        answerService.modify(answer, answerForm.getContent());
+
+        return "redirect:/question/detail/%d".formatted(answer.getQuestion().getId());
+    }
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/delete/{id}")
     public String answerDelete(Principal principal, @PathVariable("id") Long id) {
@@ -67,6 +90,16 @@ public class AnswerController {
 
         answerService.delete(answer);
 
+        return "redirect:/question/detail/%d".formatted(answer.getQuestion().getId());
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/vote/{id}")
+    public String answerVote(Principal principal, @PathVariable("id") Long id) {
+        Answer answer = answerService.getAnswer(id);
+        SiteUser siteUser = userService.getUser(principal.getName());
+
+        answerService.vote(answer, siteUser);
         return "redirect:/question/detail/%d".formatted(answer.getQuestion().getId());
     }
 }
