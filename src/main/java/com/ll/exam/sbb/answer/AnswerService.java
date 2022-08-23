@@ -26,4 +26,8 @@ public class AnswerService {
     public Answer getAnswer(Long id) {
         return answerRepository.findById(id).orElseThrow(() -> new DataNotFoundException("answer not found"));
     }
+
+    public void delete(Answer answer) {
+        answerRepository.delete(answer);
+    }
 }
