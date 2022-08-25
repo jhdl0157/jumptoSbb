@@ -21,6 +21,9 @@
                         <span th:text="${question.author?.username}"></span>
                     </div>
                     <div th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></div>
+                    <div>
+                        HIT : [[${question.hits}]]
+                    </div>
                 </div>
             </div>
 
@@ -30,6 +33,7 @@
                     추천
                     <span class="badge rounded-pill bg-success" th:text="${#lists.size(question.voter)}"></span>
                 </a>
+
 
                 <a th:href="@{|/question/modify/${question.id}|}" class="btn btn-sm btn-outline-secondary"
                    sec:authorize="isAuthenticated()"
