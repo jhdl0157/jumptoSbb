@@ -4,6 +4,7 @@ import com.ll.exam.sbb.answer.Answer;
 import com.ll.exam.sbb.user.SiteUser;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -36,8 +37,14 @@ public class Question {
     @ManyToMany
     Set<SiteUser> voter;
 
+    private Integer hits=0;
+
     public void addAnswer(Answer answer) {
         answer.setQuestion(this);
         getAnswerList().add(answer);
+    }
+
+    public void addHits(){
+        this.hits+=1;
     }
 }
